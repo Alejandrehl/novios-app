@@ -335,8 +335,12 @@ For questions or suggestions about these rules:
 - **Technical**: Rodrigo Eduardo Guerrero Godoy - [LinkedIn](https://www.linkedin.com/in/rodrigoguerrerogodoy/)
 - **Design**: Diego Emilio Fuentes Gómez - [LinkedIn](https://www.linkedin.com/in/diegoemiliofuentesgomez/)
 
+## Repository
+
+**GitHub**: [github.com/Alejandrehl/novios-app](https://github.com/Alejandrehl/novios-app)
+
 ---
 
-**Last Updated**: November 26, 2024
+**Last Updated**: November 26, 2025
 **Version**: 2.1.0
 **Status**: ✅ Optimized for Context Engineering with Frontmatter

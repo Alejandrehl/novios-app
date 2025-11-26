@@ -342,6 +342,10 @@ main()
 
 ## CI/CD Pipeline
 
+### Repository
+
+**GitHub**: [github.com/Alejandrehl/novios-app](https://github.com/Alejandrehl/novios-app)
+
 ### GitHub Actions (Recommended)
 
 ```yaml

@@ -2,6 +2,8 @@
 
 A modern, full-stack wedding management platform built with Next.js 15, TypeScript, and PostgreSQL. Couples can create personalized wedding pages, manage guest lists with RSVP functionality, and receive monetary contributions via Mercado Pago.
 
+**Repository**: [github.com/Alejandrehl/novios-app](https://github.com/Alejandrehl/novios-app)
+
 ## 🎯 Project Overview
 
 **Status**: 🚧 Initial Setup - MVP in Development
@@ -68,7 +70,7 @@ A modern, full-stack wedding management platform built with Next.js 15, TypeScri
 
 ```bash
 # Clone repository
-git clone <repository-url>
+git clone https://github.com/Alejandrehl/novios-app.git
 cd novios-app
 
 # Install dependencies
