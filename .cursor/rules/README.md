@@ -41,7 +41,7 @@ WHO executes and HOW they work
 
 WHAT technologies to use
 
-- Next.js 15+ (App Router), TypeScript, Tailwind CSS
+- Next.js 16 (App Router), TypeScript, Tailwind CSS
 - shadcn/ui, React Hook Form, Zod
 - PostgreSQL, Prisma ORM
 - Auth.js (NextAuth), Mercado Pago

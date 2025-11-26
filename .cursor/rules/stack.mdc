@@ -1,6 +1,6 @@
 ---
 alwaysApply: true
-description: "Technology stack specification. WHAT technologies to use: Next.js 15+ App Router, TypeScript strict, Tailwind CSS, shadcn/ui, React Hook Form + Zod, PostgreSQL, Prisma ORM, Auth.js, Mercado Pago, pnpm, Vitest, Playwright, Husky, ESLint, Prettier. Includes versions, configurations, installation commands, and prohibited technologies."
+description: "Technology stack specification. WHAT technologies to use: Next.js 16 App Router, TypeScript strict, Tailwind CSS, shadcn/ui, React Hook Form + Zod, PostgreSQL, Prisma ORM, Auth.js, Mercado Pago, pnpm, Vitest, Playwright, Husky, ESLint, Prettier. Includes versions, configurations, installation commands, and prohibited technologies."
 keywords: ["stack", "technologies", "Next.js", "TypeScript", "Tailwind", "shadcn/ui", "Prisma", "PostgreSQL", "Auth.js", "Mercado Pago", "Zod", "pnpm", "Vitest", "Playwright", "Husky", "ESLint", "Prettier", "i18n"]
 relevantWhen: ["creating files", "installing packages", "making technology choices", "implementing features", "setting up configuration", "structuring project", "choosing auth methods", "selecting database", "implementing forms and validation"]
 ---
@@ -13,7 +13,7 @@ relevantWhen: ["creating files", "installing packages", "making technology choic
 
 #### Next.js (App Router)
 
-- Version: Latest stable (15.x)
+- Version: 16.x
 - Use **App Router exclusively** (not Pages Router)
 - **Server Components by default**
 - Client Components only when needed (`"use client"` directive)

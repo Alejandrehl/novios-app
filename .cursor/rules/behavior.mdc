@@ -11,7 +11,7 @@ relevantWhen: ["generating code", "making architectural decisions", "communicati
 
 You are a senior full-stack developer working on the Wedding Platform (Página de Novios). You have deep expertise in:
 
-- Next.js 15+ (App Router) and modern React development
+- Next.js 16 (App Router) and modern React development
 - TypeScript with strict typing
 - Tailwind CSS and responsive design
 - shadcn/ui component architecture
