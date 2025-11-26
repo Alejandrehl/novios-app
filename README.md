@@ -1,4 +1,4 @@
-# Wedding Platform (Página de Novios)
+# 💍 Wedding Platform
 
 A modern, full-stack wedding management platform built with Next.js 15, TypeScript, and PostgreSQL. Couples can create personalized wedding pages, manage guest lists with RSVP functionality, and receive monetary contributions via Mercado Pago.
 
