@@ -1,0 +1,556 @@
+---
+alwaysApply: false
+description: "Infrastructure and deployment configuration. WHERE and HOW the app runs: Vercel hosting, PostgreSQL options (Neon/Railway/Supabase), environment variables, build config, CI/CD, monitoring, backups, scaling. Development, staging, production setup."
+keywords: ["infrastructure", "deployment", "Vercel", "PostgreSQL", "Neon", "Railway", "Supabase", "environment", "CI/CD", "monitoring", "backups", "scaling", "production"]
+relevantWhen: ["setting up environments", "deploying to production", "configuring database", "setting environment variables", "implementing CI/CD", "monitoring application", "scaling application", "creating backups", "optimizing performance", "troubleshooting issues"]
+---
+
+# Infrastructure and Deployment
+
+## Hosting Platform
+
+### Vercel (Recommended)
+
+**Why Vercel**:
+
+- Optimized for Next.js (made by the same company)
+- Zero-config deployments
+- Automatic HTTPS
+- Edge network (fast globally)
+- Preview deployments for each PR
+- Generous free tier for MVP
+
+**Deployment**:
+
+```bash
+# Automatic deployment
+git push origin main  # Deploys to production
+
+git push origin feature-branch  # Creates preview deployment
+```
+
+## Database Hosting
+
+### Option 1: Neon (Recommended for MVP)
+
+**Why Neon**:
+
+- Serverless PostgreSQL
+- Generous free tier
+- Automatic scaling
+- Branch databases for development
+- Connection pooling built-in
+
+**Setup**:
+
+```bash
+# Environment variables
+DATABASE_URL="postgresql://user:pass@ep-xxx.neon.tech/neondb?sslmode=require"
+DIRECT_URL="postgresql://user:pass@ep-xxx.neon.tech/neondb?sslmode=require"
+```
+
+### Option 2: Railway
+
+**Why Railway**:
+
+- Simple setup
+- PostgreSQL + Redis support
+- Easy environment variables
+- Good for small projects
+
+**Setup**:
+
+```bash
+# Environment variables
+DATABASE_URL="postgresql://user:pass@containers-us-west-xxx.railway.app:6543/railway"
+```
+
+### Option 3: Supabase
+
+**Why Supabase**:
+
+- PostgreSQL with additional features
+- Built-in auth (optional alternative to Auth.js)
+- Real-time subscriptions (for future features)
+- Storage for files (for future photo uploads)
+
+**Setup**:
+
+```bash
+# Environment variables
+DATABASE_URL="postgresql://postgres:pass@db.xxx.supabase.co:5432/postgres"
+DIRECT_URL="postgresql://postgres:pass@db.xxx.supabase.co:5432/postgres"
+```
+
+## Environment Variables
+
+### Required Variables
+
+```bash
+# .env.local (development)
+# Database
+DATABASE_URL="postgresql://..."
+DIRECT_URL="postgresql://..."
+
+# Auth
+NEXTAUTH_SECRET="generate-with-openssl-rand-base64-32"
+NEXTAUTH_URL="http://localhost:3000"
+
+# Mercado Pago
+MERCADOPAGO_ACCESS_TOKEN="TEST-xxx-xxx"
+MERCADOPAGO_PUBLIC_KEY="TEST-xxx-xxx"
+MERCADOPAGO_WEBHOOK_SECRET="your-webhook-secret"
+
+# App
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
+
+### Production Variables
+
+```bash
+# Production environment
+DATABASE_URL="postgresql://..."
+DIRECT_URL="postgresql://..."
+NEXTAUTH_SECRET="different-secret-for-production"
+NEXTAUTH_URL="https://yourdomain.com"
+MERCADOPAGO_ACCESS_TOKEN="APP-xxx-xxx"  # Production token
+MERCADOPAGO_PUBLIC_KEY="APP-xxx-xxx"
+NEXT_PUBLIC_APP_URL="https://yourdomain.com"
+```
+
+### Environment Variable Validation
+
+```typescript
+// lib/env.ts
+import { z } from "zod";
+
+const envSchema = z.object({
+  // Database
+  DATABASE_URL: z.string().url(),
+  DIRECT_URL: z.string().url(),
+  
+  // Auth
+  NEXTAUTH_SECRET: z.string().min(32),
+  NEXTAUTH_URL: z.string().url(),
+  
+  // Payments
+  MERCADOPAGO_ACCESS_TOKEN: z.string().min(1),
+  MERCADOPAGO_PUBLIC_KEY: z.string().min(1),
+  
+  // App
+  NEXT_PUBLIC_APP_URL: z.string().url(),
+  NODE_ENV: z.enum(["development", "production", "test"]),
+});
+
+export const env = envSchema.parse(process.env);
+
+// Usage in code
+import { env } from "@/lib/env";
+console.log(env.DATABASE_URL); // Type-safe and validated
+```
+
+## Build Configuration
+
+### Next.js Configuration
+
+```typescript
+// next.config.ts
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  // Output configuration
+  output: "standalone", // For Docker if needed
+  
+  // Image optimization
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**.mercadopago.com",
+      },
+    ],
+  },
+  
+  // Experimental features
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "2mb",
+    },
+  },
+};
+
+export default nextConfig;
+```
+
+### TypeScript Configuration
+
+```json
+// tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "preserve",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "strict": true,
+    "noEmit": true,
+    "incremental": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
+}
+```
+
+### Tailwind Configuration
+
+```typescript
+// tailwind.config.ts
+import type { Config } from "tailwindcss";
+
+const config: Config = {
+  darkMode: ["class"],
+  content: [
+    "./app/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        primary: "hsl(var(--primary))",
+        secondary: "hsl(var(--secondary))",
+      },
+    },
+  },
+  plugins: [require("tailwindcss-animate")],
+};
+
+export default config;
+```
+
+### ESLint Configuration
+
+```json
+// .eslintrc.json
+{
+  "extends": ["next/core-web-vitals", "prettier"],
+  "rules": {
+    "@typescript-eslint/no-unused-vars": "error",
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/explicit-return-type": "warn",
+    "no-console": ["warn", { "allow": ["warn", "error"] }]
+  }
+}
+```
+
+### Prettier Configuration
+
+```json
+// .prettierrc
+{
+  "semi": true,
+  "trailingComma": "es5",
+  "singleQuote": false,
+  "printWidth": 80,
+  "tabWidth": 2,
+  "useTabs": false
+}
+```
+
+## Database Migrations
+
+### Development Workflow
+
+```bash
+# Create migration
+pnpm prisma migrate dev --name add_wedding_table
+
+# Apply migrations
+pnpm prisma migrate dev
+
+# Generate Prisma Client
+pnpm prisma generate
+
+# Reset database (development only)
+pnpm prisma migrate reset
+```
+
+### Production Workflow
+
+```bash
+# Deploy migrations to production
+pnpm prisma migrate deploy
+
+# This should run in CI/CD before deployment
+```
+
+### Seed Data
+
+```typescript
+// prisma/seed.ts
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
+
+const prisma = new PrismaClient();
+
+async function main() {
+  // Create test user
+  const hashedPassword = await bcrypt.hash("password123", 10);
+  
+  const user = await prisma.user.create({
+    data: {
+      email: "test@example.com",
+      name: "Test User",
+      password: hashedPassword,
+    },
+  });
+
+  // Create test wedding
+  await prisma.wedding.create({
+    data: {
+      userId: user.id,
+      brideAndGroomNames: "María & Juan",
+      date: new Date("2025-12-25"),
+      location: "Santiago, Chile",
+      welcomeMessage: "¡Los esperamos para celebrar!",
+      slug: "maria-y-juan-2025",
+    },
+  });
+
+  console.log("Database seeded successfully");
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
+```
+
+## CI/CD Pipeline
+
+### GitHub Actions (Recommended)
+
+```yaml
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+      
+      - name: Install dependencies
+        run: pnpm install
+      
+      - name: Run linting
+        run: pnpm run lint
+      
+      - name: Type check
+        run: pnpm run type-check
+      
+      - name: Run tests with coverage
+        run: pnpm run test:coverage
+      
+      - name: Build
+        run: pnpm run build
+        env:
+          DATABASE_URL: "postgresql://fake:fake@localhost:5432/fake"
+          NEXTAUTH_SECRET: "fake-secret-for-build"
+          NEXTAUTH_URL: "http://localhost:3000"
+```
+
+## Monitoring and Logging
+
+### Vercel Analytics
+
+```typescript
+// app/[lang]/layout.tsx
+import { Analytics } from "@vercel/analytics/react";
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        {children}
+        <Analytics />
+      </body>
+    </html>
+  );
+}
+```
+
+### Application Logging
+
+```typescript
+// lib/logger.ts
+type LogLevel = "info" | "warn" | "error";
+
+export function log(level: LogLevel, message: string, meta?: unknown) {
+  const timestamp = new Date().toISOString();
+  const logMessage = `[${timestamp}] [${level.toUpperCase()}] ${message}`;
+  
+  console[level](logMessage, meta);
+  
+  // In production, send to logging service
+  if (process.env.NODE_ENV === "production") {
+    // Send to logging service (e.g., Axiom, Logtail)
+  }
+}
+
+// Usage
+log("info", "Wedding created", { weddingId: wedding.id });
+log("error", "Payment failed", { error, contributionId });
+```
+
+## Backup and Recovery
+
+### Database Backups
+
+**Neon**:
+
+- Automatic backups daily
+- Point-in-time recovery
+- Download backups via CLI
+
+**Railway**:
+
+- Automatic backups
+- Manual snapshots available
+
+**Supabase**:
+
+- Daily backups on paid plans
+- Export data via SQL
+
+## Performance Optimization
+
+### Caching Strategy
+
+```typescript
+// Cache static data
+export const revalidate = 3600; // 1 hour
+
+// Dynamic data
+import { unstable_cache } from "next/cache";
+
+export const getWedding = unstable_cache(
+  async (slug: string) => {
+    return await prisma.wedding.findUnique({ where: { slug } });
+  },
+  ["wedding"],
+  { revalidate: 60, tags: ["wedding"] }
+);
+```
+
+### Database Connection Pooling
+
+```typescript
+// lib/prisma.ts
+import { PrismaClient } from "@prisma/client";
+
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
+
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+  });
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+}
+```
+
+## Scaling Considerations
+
+### Current Architecture (MVP)
+
+- Monolithic Next.js app on Vercel
+- Single PostgreSQL database
+- Handles ~1,000 concurrent users
+
+### Future Scaling (Post-MVP)
+
+**Horizontal Scaling**:
+
+- Vercel auto-scales
+- Database read replicas (Neon supports this)
+- Redis for caching (Railway, Upstash)
+
+**Service Extraction**:
+
+```text
+Current (MVP):
+┌─────────────────────┐
+│    Next.js App      │
+│  ┌──────────────┐   │
+│  │   Routes     │   │
+│  │   Services   │   │
+│  │ Repositories │   │
+│  └──────────────┘   │
+└─────────┬───────────┘
+          │
+    ┌─────▼─────┐
+    │ PostgreSQL│
+    └───────────┘
+
+Future (Microservices):
+┌──────────────┐   ┌─────────────┐   ┌──────────────┐
+│  Next.js UI  │──▶│  API Gateway│──▶│Payment Service│
+└──────────────┘   └─────┬───────┘   └──────────────┘
+                         │
+                   ┌─────▼─────────┐
+                   │ Wedding Service│
+                   └─────┬─────────┘
+                         │
+                   ┌─────▼─────┐
+                   │ PostgreSQL│
+                   └───────────┘
+```
+
+## Security Checklist
+
+### Production Deployment
+
+- [ ] HTTPS enabled (Vercel provides this)
+- [ ] Environment variables secured
+- [ ] Database connection uses SSL
+- [ ] NEXTAUTH_SECRET is strong and unique
+- [ ] Mercado Pago uses production credentials
+- [ ] Rate limiting enabled (Vercel provides basic protection)
+- [ ] CORS configured properly
+- [ ] No sensitive data in client-side code
+- [ ] Password hashing with bcrypt
+- [ ] SQL injection prevented (Prisma handles this)

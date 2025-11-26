@@ -1,0 +1,267 @@
+---
+alwaysApply: true
+description: "Technology stack specification. WHAT technologies to use: Next.js 15+ App Router, TypeScript strict, Tailwind CSS, shadcn/ui, React Hook Form + Zod, PostgreSQL, Prisma ORM, Auth.js, Mercado Pago, pnpm, Vitest, Playwright, Husky, ESLint, Prettier. Includes versions, configurations, installation commands, and prohibited technologies."
+keywords: ["stack", "technologies", "Next.js", "TypeScript", "Tailwind", "shadcn/ui", "Prisma", "PostgreSQL", "Auth.js", "Mercado Pago", "Zod", "pnpm", "Vitest", "Playwright", "Husky", "ESLint", "Prettier", "i18n"]
+relevantWhen: ["creating files", "installing packages", "making technology choices", "implementing features", "setting up configuration", "structuring project", "choosing auth methods", "selecting database", "implementing forms and validation"]
+---
+
+# Technology Stack
+
+## Core Stack
+
+### Frontend + Backend Framework
+
+#### Next.js (App Router)
+
+- Version: Latest stable (15.x)
+- Use **App Router exclusively** (not Pages Router)
+- **Server Components by default**
+- Client Components only when needed (`"use client"` directive)
+- Implement **Server Actions** for mutations when appropriate
+- Use **Route Handlers** for API endpoints
+
+### Language
+
+#### TypeScript
+
+- Version: 5.x+
+- **Strict mode enabled** in `tsconfig.json`
+- No `any` types (use `unknown` if type is truly unknown)
+- **Proper typing** for all functions, components, and data structures
+- Use **type inference** where it improves readability
+- **Explicit return types** for all exported functions
+
+### Styling
+
+#### Tailwind CSS
+
+- Version: 3.x+
+- **Utility-first approach**
+- Follow **responsive design patterns** (mobile-first)
+- Use Tailwind configuration for custom colors and theme
+- **Avoid inline styles** or CSS modules
+- Use **CSS variables** for theming (light/dark mode support)
+
+### UI Components
+
+#### shadcn/ui
+
+- Use as the **primary component library**
+- Install components **as needed** (not all at once)
+- Customize components in `components/ui/` directory
+- Maintain **consistent design system**
+- Follow **shadcn/ui naming conventions**
+- Use **Radix UI primitives** under the hood
+
+**Installation**:
+
+```bash
+pnpm dlx shadcn@latest add button
+pnpm dlx shadcn@latest add input
+pnpm dlx shadcn@latest add form
+```
+
+### Forms and Validation
+
+#### React Hook Form + Zod
+
+- **React Hook Form** for form state management
+- **Zod** for schema validation
+- Validate **both client-side and server-side**
+- **Share Zod schemas** between frontend and backend
+- Use **zodResolver** to integrate with React Hook Form
+
+### Database
+
+#### PostgreSQL
+
+- Version: 14+
+- Hosted on **Neon / Railway / Supabase**
+- Use **connection pooling**
+- Follow database best practices
+- Implement **proper indexes** for performance
+- Use **transactions** for multi-step operations
+
+### ORM
+
+#### Prisma
+
+- Version: 5.x+
+- Use **Prisma Client** for all database operations
+- Define schema in `prisma/schema.prisma`
+- Use **migrations** for schema changes
+- Implement **proper relations** and constraints
+- Use **Prisma types** in TypeScript
+
+### Authentication
+
+#### Auth.js (NextAuth.js v5)
+
+- Version: 5.x (beta)
+- **Email + password** authentication
+- **Session management** (database sessions)
+- Protected routes with **middleware**
+- **Role-based access control** if needed
+- Secure **password hashing** (bcrypt)
+
+### Payments
+
+#### Mercado Pago
+
+- Integration for **payment processing**
+- **Webhook handling** for payment status updates
+- Implement **abstraction layer** for easy provider replacement
+- Handle payment states properly: `pending`, `paid`, `failed`
+- Store **transaction references**
+
+### Internationalization (i18n)
+
+**MANDATORY**: Use Next.js i18n from the start.
+
+#### Next.js i18n Pattern
+
+- **Approach**: Dictionary-based translations (official Next.js pattern)
+- **Structure**: `app/[lang]/` with locale parameter
+- **Locales**: English (`en`) default, Spanish (`es`)
+- **Auto-detection**: Browser `Accept-Language` header via middleware
+- **NO hardcoded text**: All user-facing strings in JSON dictionaries
+
+**Reference**: [Next.js Internationalization](https://nextjs.org/docs/pages/guides/internationalization)
+
+#### Required Packages
+
+```bash
+pnpm add @formatjs/intl-localematcher negotiator
+pnpm add -D @types/negotiator
+```
+
+## Development Tools
+
+### Package Manager
+
+#### pnpm
+
+- Use **pnpm** for all package installations
+- Commit `pnpm-lock.yaml` to version control
+- **Never** use npm or yarn
+
+**Commands**:
+
+```bash
+# Dependencies
+pnpm install
+pnpm add <package>
+pnpm add -D <package>
+
+# Development
+pnpm dev
+pnpm build
+pnpm start
+
+# Testing (MANDATORY)
+pnpm test
+pnpm test:watch
+pnpm test:coverage
+pnpm test:ui
+pnpm test:e2e
+pnpm test:e2e:ui
+
+# Code Quality (MANDATORY before commit)
+pnpm lint
+pnpm lint:fix
+pnpm format
+pnpm type-check
+
+# Git Hooks
+pnpm prepare
+```
+
+### Testing
+
+**MANDATORY**: TDD approach with >80% coverage.
+
+#### Vitest
+
+- Version: Latest
+- Use for **unit tests** and **integration tests**
+- Fast, modern test runner for Vite/Next.js
+- Built-in coverage with v8
+
+**Installation**:
+
+```bash
+pnpm add -D vitest @vitest/ui @vitejs/plugin-react
+pnpm add -D @testing-library/react @testing-library/user-event @testing-library/jest-dom
+```
+
+#### Playwright
+
+- Version: Latest
+- Use for **E2E tests** (end-to-end)
+- Tests real user workflows
+- Cross-browser testing
+
+**Installation**:
+
+```bash
+pnpm add -D @playwright/test
+pnpm exec playwright install
+```
+
+### Code Quality
+
+#### ESLint
+
+- Use Next.js ESLint configuration
+- Add custom rules for project
+- **Zero errors, zero warnings** before commit
+- Enforced by Husky pre-commit hook
+
+#### Prettier
+
+- Format code consistently
+- Integrate with ESLint
+- Enforced by Husky pre-commit hook
+
+#### Commitlint
+
+- Enforce Conventional Commits specification
+- Integrated with Husky commit-msg hook
+
+**Installation**:
+
+```bash
+pnpm add -D @commitlint/cli @commitlint/config-conventional
+```
+
+#### Husky
+
+- **MANDATORY**: Pre-commit and commit-msg hooks
+- Ensures code quality before commits
+- Prevents bad commits from entering repository
+
+**Installation**:
+
+```bash
+pnpm add -D husky lint-staged
+pnpm exec husky install
+```
+
+## Prohibited Technologies
+
+Do NOT use:
+
+- ❌ JavaScript without TypeScript
+- ❌ Pages Router (use App Router only)
+- ❌ CSS-in-JS libraries (use Tailwind)
+- ❌ Other UI libraries alongside shadcn/ui (MUI, Ant Design, etc.)
+- ❌ MongoDB or other NoSQL (use PostgreSQL)
+- ❌ Other ORMs besides Prisma (TypeORM, Sequelize, etc.)
+- ❌ JWT-based auth (use Auth.js sessions)
+- ❌ npm or yarn (use pnpm only)
+- ❌ Redux or other state management (use React hooks + Server State)
+- ❌ Jest (use Vitest instead)
+- ❌ Cypress (use Playwright instead)
+- ❌ Committing without running tests
+- ❌ Committing with linting errors/warnings
+- ❌ Skipping Husky hooks with `--no-verify`

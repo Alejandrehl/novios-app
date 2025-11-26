@@ -1,0 +1,384 @@
+---
+alwaysApply: false
+description: "Team composition and roles for Wedding Platform project. Defines WHO is working on the project: Alejandro Exequiel Hernández Lara (Full-Stack Developer & Product Owner), Rodrigo Eduardo Guerrero Godoy (Full-Stack Developer & Tech Lead), Diego Emilio Fuentes Gómez (Full-Stack Developer & UI/UX Specialist). Includes responsibilities, communication guidelines, and collaboration practices."
+keywords: ["team", "roles", "responsibilities", "collaboration", "developers", "Alejandro Hernández", "Rodrigo Guerrero", "Diego Fuentes", "communication", "code review", "decision making"]
+relevantWhen: ["making product decisions", "making technical decisions", "making design decisions", "requesting code reviews", "resolving conflicts", "assigning tasks", "communicating with team", "understanding expertise areas", "escalating issues", "planning features"]
+---
+
+# Team Composition and Roles
+
+## Team Members
+
+### Alejandro Exequiel Hernández Lara
+
+**Role**: Full-Stack Developer & Product Owner
+
+**LinkedIn**: [linkedin.com/in/alejandrehl](https://www.linkedin.com/in/alejandrehl/)
+
+**Responsibilities**:
+
+- Product vision and requirements definition
+- Feature prioritization and roadmap planning
+- Full-stack development (Next.js, TypeScript, Prisma)
+- Client communication and feedback gathering
+- Business logic implementation
+- Final decision-making on product features
+- User acceptance testing
+
+**Expertise**:
+
+- Product management and user experience
+- Business requirements analysis
+- Full-stack JavaScript/TypeScript development
+- Agile methodologies
+
+**Communication**:
+
+- Primary contact for product decisions
+- Approves feature specifications
+- Defines user stories and acceptance criteria
+
+---
+
+### Rodrigo Eduardo Guerrero Godoy
+
+**Role**: Full-Stack Developer & Tech Lead
+
+**LinkedIn**: [linkedin.com/in/rodrigoguerrerogodoy](https://www.linkedin.com/in/rodrigoguerrerogodoy/)
+
+**Responsibilities**:
+
+- Technical architecture and design decisions
+- Code quality and best practices enforcement
+- Full-stack development (Next.js, TypeScript, Prisma)
+- Database schema design and optimization
+- Security implementation and review
+- Performance optimization
+- Technical documentation
+- Code review and mentorship
+
+**Expertise**:
+
+- Software architecture and design patterns
+- Database design and optimization
+- Security best practices
+- Performance tuning
+- Technical leadership
+
+**Communication**:
+
+- Primary contact for technical decisions
+- Approves architectural changes
+- Reviews and approves complex implementations
+- Provides technical guidance to team
+
+---
+
+### Diego Emilio Fuentes Gómez
+
+**Role**: Full-Stack Developer & UI/UX Specialist
+
+**LinkedIn**: [linkedin.com/in/diegoemiliofuentesgomez](https://www.linkedin.com/in/diegoemiliofuentesgomez/)
+
+**Responsibilities**:
+
+- UI/UX design and implementation
+- Component library development (shadcn/ui)
+- Responsive design and mobile optimization
+- Full-stack development (Next.js, TypeScript, Prisma)
+- Accessibility implementation
+- Frontend performance optimization
+- Design system maintenance
+- User interface consistency
+
+**Expertise**:
+
+- User interface design and implementation
+- User experience best practices
+- Tailwind CSS and modern CSS
+- Responsive and mobile-first design
+- Accessibility (WCAG standards)
+- Component-driven development
+
+**Communication**:
+
+- Primary contact for UI/UX decisions
+- Approves design implementations
+- Reviews frontend code for consistency
+- Ensures accessibility standards
+
+---
+
+## Team Structure
+
+```text
+Wedding Platform Team
+│
+├── Product Layer
+│   └── Alejandro Hernández (Product Owner)
+│       ├── Requirements
+│       ├── User Stories
+│       └── Feature Priorities
+│
+├── Technical Layer
+│   └── Rodrigo Guerrero (Tech Lead)
+│       ├── Architecture
+│       ├── Security
+│       └── Performance
+│
+└── Design Layer
+    └── Diego Fuentes (UI/UX Specialist)
+        ├── User Interface
+        ├── User Experience
+        └── Design System
+```
+
+## Collaboration Practices
+
+### Decision Making
+
+**Product Decisions**:
+
+- Owner: Alejandro Hernández
+- Process: Define requirements → Review with team → Approve
+
+**Technical Decisions**:
+
+- Owner: Rodrigo Guerrero
+- Process: Propose solution → Team discussion → Approve
+- Examples: Database schema, API design, architecture patterns
+
+**Design Decisions**:
+
+- Owner: Diego Fuentes
+- Process: Design mockup → Team feedback → Implement
+- Examples: Component design, layout, user flows
+
+**Consensus Required**:
+
+- Major architectural changes
+- Technology stack changes
+- Breaking changes to existing features
+- Security-critical implementations
+
+### Code Review Process
+
+**All team members review code**:
+
+1. Developer creates PR
+2. Request review from relevant specialist:
+   - Backend/Architecture: Rodrigo
+   - Frontend/UI: Diego
+   - Product/UX: Alejandro
+3. Address feedback
+4. At least one approval required
+5. Merge to main
+
+**Review Checklist**:
+
+- [ ] Follows TypeScript strict typing
+- [ ] Zod validation for inputs
+- [ ] Error handling implemented
+- [ ] Responsive design (mobile-first)
+- [ ] Accessible (keyboard navigation, ARIA)
+- [ ] Follows project conventions
+- [ ] No console.logs in production code
+- [ ] Comments in English
+- [ ] Commit message follows Conventional Commits
+
+### Communication Guidelines
+
+**Daily Communication**:
+
+- Use project chat for quick questions
+- Tag specific person for their expertise area
+- Share progress and blockers
+
+**Code Communication**:
+
+- Write clear commit messages
+- Document complex logic with comments (English)
+- Update README when architecture changes
+- Create issues for bugs and features
+
+**Meeting Cadence** (Recommended):
+
+- Weekly: Team sync (30 min)
+  - Progress review
+  - Blocker discussion
+  - Next week planning
+- Bi-weekly: Sprint planning (1 hour)
+  - Feature prioritization
+  - Task assignment
+  - Sprint goal setting
+- Ad-hoc: Technical discussions as needed
+
+### Expertise Areas
+
+**When to consult each team member**:
+
+**Alejandro** (Product):
+
+- User flow questions
+- Feature requirements
+- Business logic
+- User acceptance criteria
+- Market/competitor analysis
+
+**Rodrigo** (Technical):
+
+- Architecture decisions
+- Database schema changes
+- Security implementations
+- Performance issues
+- Backend complexity
+- API design
+
+**Diego** (UI/UX):
+
+- Component design
+- User experience flows
+- Responsive layouts
+- Accessibility
+- Design consistency
+- Animation/interactions
+
+## Development Workflow
+
+### Feature Development
+
+1. **Planning**:
+   - Alejandro: Define requirements and user stories
+   - Rodrigo: Review technical feasibility
+   - Diego: Create UI mockups if needed
+   - Team: Estimate effort
+
+2. **Implementation**:
+   - Developer: Pick task from backlog
+   - Developer: Create feature branch
+   - Developer: Implement following all rules
+   - Developer: Self-review code
+
+3. **Review**:
+   - Create PR with clear description
+   - Request reviews from relevant specialists
+   - Address feedback
+   - Get approval
+
+4. **Deployment**:
+   - Merge to main
+   - Automatic deployment via Vercel
+   - Verify in production
+   - Update task status
+
+### Bug Fixing
+
+1. **Reporting**:
+   - Any team member can report
+   - Include steps to reproduce
+   - Tag severity (critical/high/medium/low)
+
+2. **Assignment**:
+   - Critical: Immediate attention
+   - High: This sprint
+   - Medium: Next sprint
+   - Low: Backlog
+
+3. **Fix**:
+   - Create bug fix branch
+   - Write test to reproduce bug
+   - Fix bug
+   - Verify test passes
+   - Create PR
+
+4. **Verification**:
+   - Code review
+   - Test in staging
+   - Deploy to production
+   - Verify fix
+
+## Conflict Resolution
+
+### Technical Disagreements
+
+1. Present both options with pros/cons
+2. Discuss with full team
+3. Rodrigo (Tech Lead) makes final call
+4. Document decision and reasoning
+
+### Product Disagreements
+
+1. Present different approaches
+2. Consider user impact
+3. Alejandro (Product Owner) makes final call
+4. Document decision and reasoning
+
+### Design Disagreements
+
+1. Create mockups for alternatives
+2. Consider usability and accessibility
+3. Diego (UI/UX Specialist) makes final call
+4. Can prototype both if needed
+
+## Skill Development
+
+### Shared Learning
+
+- Share interesting articles/tutorials
+- Pair programming on complex features
+- Knowledge sharing sessions
+- Code review as teaching opportunity
+
+### Individual Growth
+
+- Each member deepens their specialization
+- Cross-training in other areas encouraged
+- Attend relevant conferences/workshops
+- Contribute to open source (when possible)
+
+## Remote Work Guidelines
+
+**Availability**:
+
+- Define core hours for overlap
+- Use status indicators (available/busy/offline)
+- Respond to urgent messages within 2 hours
+- Non-urgent messages by end of day
+
+**Asynchronous Communication**:
+
+- Write detailed PR descriptions
+- Document decisions in issues/PRs
+- Update project status regularly
+- Record important meetings
+
+**Tools** (Recommended):
+
+- Code: GitHub
+- Communication: Slack/Discord
+- Project Management: GitHub Projects / Linear
+- Documentation: Notion / GitHub Wiki
+- Design: Figma
+
+## Code Ownership
+
+### Shared Ownership
+
+- All code is owned by the team
+- Anyone can modify any part of the codebase
+- Follow established patterns and conventions
+- Consult specialist for complex changes
+
+### No Gatekeeping
+
+- Don't block progress on perfection
+- Iterate and improve over time
+- "Good enough" is okay for MVP
+- Can always refactor later
+
+### Maintain Quality
+
+- Even with shared ownership, maintain standards
+- Follow all rules in `.cursor/rules/`
+- Review changes carefully
+- Leave code better than you found it

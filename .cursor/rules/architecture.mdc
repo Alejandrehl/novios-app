@@ -1,0 +1,767 @@
+---
+alwaysApply: true
+description: "Architecture and coding patterns for Wedding Platform. Defines HOW the code should be structured: layered architecture (API routes, services, repositories), separation of concerns, Server Components vs Client Components patterns, Server Actions usage, API route handlers, Prisma repository pattern, Zod schema organization, error handling patterns, and file/folder conventions."
+keywords: ["architecture", "patterns", "layered architecture", "separation of concerns", "services", "repositories", "Server Components", "Client Components", "Server Actions", "API routes", "Prisma", "Zod schemas", "error handling", "folder structure", "code organization"]
+relevantWhen: ["structuring features", "creating files", "organizing code", "implementing business logic", "accessing database", "handling errors", "creating Server/Client Components", "writing Server Actions", "creating API routes", "validating data", "managing types"]
+---
+
+# Architecture and Coding Patterns
+
+## Layered Architecture
+
+The application follows a **layered architecture** within a monolithic Next.js structure, designed to be easily extracted into microservices later.
+
+### Architecture Layers
+
+```text
+┌─────────────────────────────────────────┐
+│         Presentation Layer              │
+│  (app/ routes, components/, layouts)    │
+└──────────────┬──────────────────────────┘
+               │
+┌──────────────▼──────────────────────────┐
+│         API Layer (Optional)            │
+│      (app/api/ Route Handlers)          │
+└──────────────┬──────────────────────────┘
+               │
+┌──────────────▼──────────────────────────┐
+│         Business Logic Layer            │
+│         (lib/services/)                 │
+│  - WeddingService                       │
+│  - GuestService                         │
+│  - PaymentService                       │
+└──────────────┬──────────────────────────┘
+               │
+┌──────────────▼──────────────────────────┐
+│         Data Access Layer               │
+│      (lib/repositories/)                │
+│  - WeddingRepository                    │
+│  - GuestRepository                      │
+└──────────────┬──────────────────────────┘
+               │
+┌──────────────▼──────────────────────────┐
+│            Database                     │
+│         (PostgreSQL + Prisma)           │
+└─────────────────────────────────────────┘
+```
+
+### Layer Responsibilities
+
+**Presentation Layer** (`app/`, `components/`):
+
+- Render UI components
+- Handle user interactions
+- Call Server Actions or API routes
+- Display data from Server Components
+- Client-side form validation
+
+**API Layer** (`app/api/`):
+
+- HTTP request/response handling
+- Authentication checks
+- Input validation (Zod)
+- Call service layer
+- Return JSON responses
+- Used for webhooks and third-party integrations
+
+**Service Layer** (`lib/services/`):
+
+- Business logic implementation
+- Orchestrate multiple repositories
+- Transaction management
+- Business rule enforcement
+- Error handling and logging
+
+**Repository Layer** (`lib/repositories/`):
+
+- Database operations (CRUD)
+- Prisma queries
+- Data transformation
+- Query optimization
+- No business logic
+
+## Folder Structure
+
+```text
+novios-app/
+├── app/
+│   ├── [lang]/                   # Locale-based routing (i18n)
+│   │   ├── dictionaries/        # Translation files
+│   │   │   ├── en.json         # English translations
+│   │   │   └── es.json         # Spanish translations
+│   │   ├── dictionaries.ts     # Dictionary loader
+│   │   ├── (auth)/             # Auth route group
+│   │   │   ├── login/
+│   │   │   │   └── page.tsx
+│   │   │   └── register/
+│   │   │       └── page.tsx
+│   │   ├── (dashboard)/        # Protected route group
+│   │   │   ├── layout.tsx     # Dashboard layout with auth check
+│   │   │   ├── page.tsx       # Dashboard home
+│   │   │   └── weddings/
+│   │   │       ├── page.tsx   # List weddings
+│   │   │       ├── new/
+│   │   │       │   └── page.tsx # Create wedding
+│   │   │       └── [id]/
+│   │   │           ├── page.tsx # Edit wedding
+│   │   │           ├── guests/
+│   │   │           │   └── page.tsx # Manage guests
+│   │   │           └── contributions/
+│   │   │               └── page.tsx # View contributions
+│   │   ├── boda/              # Public wedding pages
+│   │   │   └── [slug]/
+│   │   │       └── page.tsx   # Public wedding page
+│   │   ├── layout.tsx         # Root layout with lang
+│   │   └── page.tsx           # Home page with lang
+│   ├── api/                    # API routes (outside [lang])
+│   │   ├── auth/
+│   │   │   └── [...nextauth]/
+│   │   │       └── route.ts   # Auth.js handler
+│   │   ├── payments/
+│   │   │   ├── create/
+│   │   │   │   └── route.ts   # Create payment
+│   │   │   └── webhook/
+│   │   │       └── route.ts   # Payment webhook
+│   │   └── health/
+│   │       └── route.ts       # Health check
+│   └── globals.css            # Global styles
+│
+├── middleware.ts               # Locale detection and redirect
+│
+├── components/
+│   ├── ui/                      # shadcn/ui components
+│   │   ├── button.tsx
+│   │   ├── input.tsx
+│   │   ├── form.tsx
+│   │   └── ...
+│   ├── forms/                   # Form components
+│   │   ├── wedding-form.tsx
+│   │   ├── rsvp-form.tsx
+│   │   └── contribution-form.tsx
+│   ├── features/                # Feature-specific components
+│   │   ├── weddings/
+│   │   │   ├── wedding-card.tsx
+│   │   │   └── wedding-list.tsx
+│   │   ├── guests/
+│   │   │   └── guest-table.tsx
+│   │   └── contributions/
+│   │       └── contribution-list.tsx
+│   └── layout/                  # Layout components
+│       ├── header.tsx
+│       ├── footer.tsx
+│       └── sidebar.tsx
+│
+├── lib/
+│   ├── services/                # Business logic
+│   │   ├── wedding-service.ts
+│   │   ├── guest-service.ts
+│   │   ├── contribution-service.ts
+│   │   └── payment-service.ts
+│   ├── repositories/            # Data access
+│   │   ├── wedding-repository.ts
+│   │   ├── guest-repository.ts
+│   │   └── contribution-repository.ts
+│   ├── schemas/                 # Zod schemas
+│   │   ├── auth.ts
+│   │   ├── wedding.ts
+│   │   ├── guest.ts
+│   │   └── contribution.ts
+│   ├── actions/                 # Server Actions
+│   │   ├── wedding-actions.ts
+│   │   ├── guest-actions.ts
+│   │   └── auth-actions.ts
+│   ├── auth/                    # Authentication
+│   │   ├── config.ts           # Auth.js config
+│   │   └── middleware.ts       # Auth middleware
+│   ├── utils/                   # Utility functions
+│   │   ├── date.ts
+│   │   ├── currency.ts
+│   │   └── slug.ts
+│   ├── types/                   # TypeScript types
+│   │   └── index.ts
+│   ├── prisma.ts               # Prisma client
+│   └── env.ts                  # Environment validation
+│
+├── prisma/
+│   ├── schema.prisma            # Database schema
+│   ├── migrations/              # Database migrations
+│   └── seed.ts                  # Seed data
+│
+├── public/                      # Static assets
+│   ├── images/
+│   └── icons/
+│
+├── .cursor/
+│   └── rules/                   # Cursor rules
+│       ├── behavior.mdc
+│       ├── stack.mdc
+│       ├── project.mdc
+│       ├── architecture.mdc
+│       ├── infrastructure.mdc
+│       └── team.mdc
+│
+├── .env.example                 # Environment template
+├── .env.local                   # Local environment (gitignored)
+├── .eslintrc.json              # ESLint config
+├── .prettierrc                 # Prettier config
+├── next.config.ts              # Next.js config
+├── tailwind.config.ts          # Tailwind config
+├── tsconfig.json               # TypeScript config
+├── package.json
+├── pnpm-lock.yaml
+└── README.md
+```
+
+## Server Components vs Client Components
+
+### Default: Server Components
+
+**Use Server Components for**:
+
+- Data fetching
+- Accessing backend resources directly
+- Keeping sensitive information on server
+- Large dependencies (keep them on server)
+- SEO and initial page load
+- **Loading translations** (dictionaries)
+
+```typescript
+// app/[lang]/boda/[slug]/page.tsx
+// This is a Server Component (default) with i18n
+import { getWedding } from "@/lib/services/wedding-service";
+import { getDictionary, type Locale } from "@/app/[lang]/dictionaries";
+
+export default async function WeddingPage({
+  params,
+}: {
+  params: Promise<{ lang: Locale; slug: string }>;
+}) {
+  const { lang, slug } = await params;
+  
+  // Load translations
+  const dict = await getDictionary(lang);
+  
+  // Can directly access database
+  const wedding = await getWedding(slug);
+
+  if (!wedding) {
+    notFound();
+  }
+
+  return (
+    <div>
+      <h1>{wedding.brideAndGroomNames}</h1>
+      <p>{wedding.welcomeMessage}</p>
+      {/* Pass translations to Client Components */}
+      <RSVPForm weddingId={wedding.id} dict={dict.rsvp} />
+    </div>
+  );
+}
+```
+
+### Client Components: Only When Needed
+
+**Use Client Components for**:
+
+- Interactivity (onClick, onChange)
+- State management (useState, useReducer)
+- Effects (useEffect)
+- Browser-only APIs (localStorage, window)
+- Event listeners
+- Custom hooks
+
+**IMPORTANT**: Client Components receive translations as props from Server Components.
+
+```typescript
+// components/forms/rsvp-form.tsx
+"use client";
+
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { createRsvpSchema } from "@/lib/schemas/guest";
+import type { Dictionary } from "@/app/[lang]/dictionaries";
+
+interface RSVPFormProps {
+  weddingId: string;
+  dict: Dictionary["rsvp"]; // Translations passed as prop
+}
+
+export function RSVPForm({ weddingId, dict }: RSVPFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Use translations in schema validation
+  const schema = createRsvpSchema(dict.validation);
+  
+  const form = useForm({
+    resolver: zodResolver(schema),
+  });
+
+  async function onSubmit(data: RSVPData) {
+    setIsSubmitting(true);
+    await submitRSVP(weddingId, data);
+    setIsSubmitting(false);
+  }
+
+  return (
+    <form onSubmit={form.handleSubmit(onSubmit)}>
+      <label>{dict.nameLabel}</label>
+      <input placeholder={dict.namePlaceholder} {...form.register("name")} />
+      
+      <button type="submit">
+        {isSubmitting ? dict.submitting : dict.submitButton}
+      </button>
+    </form>
+  );
+}
+```
+
+## Server Actions Pattern
+
+**Use Server Actions for**:
+
+- Form submissions
+- Data mutations
+- Revalidating cached data
+- Simple operations
+
+```typescript
+// lib/actions/guest-actions.ts
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { guestService } from "@/lib/services/guest-service";
+import { rsvpSchema } from "@/lib/schemas/guest";
+
+type ActionResult<T> =
+  | { success: true; data: T }
+  | { success: false; error: string };
+
+export async function submitRSVP(
+  weddingId: string,
+  data: z.infer<typeof rsvpSchema>
+): Promise<ActionResult<Guest>> {
+  try {
+    // Validate input
+    const validated = rsvpSchema.parse(data);
+
+    // Call service layer
+    const guest = await guestService.createOrUpdateRSVP(
+      weddingId,
+      validated
+    );
+
+    // Revalidate cache
+    revalidatePath(`/boda/${weddingId}`);
+    revalidatePath(`/dashboard/weddings/${weddingId}/guests`);
+
+    return { success: true, data: guest };
+  } catch (error) {
+    console.error("[submitRSVP]", error);
+    
+    if (error instanceof z.ZodError) {
+      return { success: false, error: "Invalid input data" };
+    }
+
+    return { success: false, error: "Failed to submit RSVP" };
+  }
+}
+```
+
+## API Route Handlers
+
+**Use API Routes for**:
+
+- Webhooks (Mercado Pago)
+- Third-party integrations
+- Complex file uploads
+- Non-standard HTTP methods
+- External API proxies
+
+```typescript
+// app/api/payments/webhook/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { paymentService } from "@/lib/services/payment-service";
+import { webhookSchema } from "@/lib/schemas/payment";
+
+export async function POST(request: NextRequest) {
+  try {
+    // Get raw body for signature verification
+    const body = await request.json();
+
+    // Verify webhook signature (Mercado Pago specific)
+    const signature = request.headers.get("x-signature");
+    if (!paymentService.verifyWebhookSignature(body, signature)) {
+      return NextResponse.json(
+        { error: "Invalid signature" },
+        { status: 401 }
+      );
+    }
+
+    // Validate webhook data
+    const data = webhookSchema.parse(body);
+
+    // Process webhook
+    await paymentService.processWebhook(data);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("[Payment Webhook]", error);
+    
+    return NextResponse.json(
+      { error: "Webhook processing failed" },
+      { status: 500 }
+    );
+  }
+}
+
+// Only allow POST requests
+export async function GET() {
+  return NextResponse.json(
+    { error: "Method not allowed" },
+    { status: 405 }
+  );
+}
+```
+
+## Service Layer Pattern
+
+Services contain **business logic** and orchestrate repositories.
+
+```typescript
+// lib/services/wedding-service.ts
+import { weddingRepository } from "@/lib/repositories/wedding-repository";
+import { guestRepository } from "@/lib/repositories/guest-repository";
+import type { WeddingInput, Wedding } from "@/lib/types";
+
+export class WeddingService {
+  async create(userId: string, data: WeddingInput): Promise<Wedding> {
+    // Business rule: Check if slug is unique
+    const existing = await weddingRepository.findBySlug(data.slug);
+    if (existing) {
+      throw new Error("Slug already in use");
+    }
+
+    // Business rule: Date must be in the future
+    if (data.date < new Date()) {
+      throw new Error("Wedding date must be in the future");
+    }
+
+    // Create wedding
+    const wedding = await weddingRepository.create({
+      userId,
+      ...data,
+    });
+
+    return wedding;
+  }
+
+  async getWithStats(id: string): Promise<WeddingWithStats> {
+    // Orchestrate multiple repository calls
+    const wedding = await weddingRepository.findById(id);
+    if (!wedding) {
+      throw new Error("Wedding not found");
+    }
+
+    const [guestCount, confirmedCount, totalContributions] =
+      await Promise.all([
+        guestRepository.countByWedding(id),
+        guestRepository.countConfirmedByWedding(id),
+        contributionRepository.sumByWedding(id),
+      ]);
+
+    return {
+      ...wedding,
+      stats: {
+        guestCount,
+        confirmedCount,
+        totalContributions,
+      },
+    };
+  }
+
+  async delete(id: string, userId: string): Promise<void> {
+    // Business rule: Only owner can delete
+    const wedding = await weddingRepository.findById(id);
+    if (!wedding) {
+      throw new Error("Wedding not found");
+    }
+
+    if (wedding.userId !== userId) {
+      throw new Error("Unauthorized");
+    }
+
+    // Cascade delete handled by Prisma
+    await weddingRepository.delete(id);
+  }
+}
+
+// Export singleton instance
+export const weddingService = new WeddingService();
+```
+
+## Repository Layer Pattern
+
+Repositories handle **database operations** only.
+
+```typescript
+// lib/repositories/wedding-repository.ts
+import { prisma } from "@/lib/prisma";
+import type { Wedding, Prisma } from "@prisma/client";
+
+export class WeddingRepository {
+  async findById(id: string): Promise<Wedding | null> {
+    return await prisma.wedding.findUnique({
+      where: { id },
+      include: {
+        user: true,
+      },
+    });
+  }
+
+  async findBySlug(slug: string): Promise<Wedding | null> {
+    return await prisma.wedding.findUnique({
+      where: { slug },
+    });
+  }
+
+  async findByUserId(userId: string): Promise<Wedding[]> {
+    return await prisma.wedding.findMany({
+      where: { userId },
+      orderBy: { date: "desc" },
+    });
+  }
+
+  async create(data: Prisma.WeddingCreateInput): Promise<Wedding> {
+    return await prisma.wedding.create({
+      data,
+    });
+  }
+
+  async update(
+    id: string,
+    data: Prisma.WeddingUpdateInput
+  ): Promise<Wedding> {
+    return await prisma.wedding.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async delete(id: string): Promise<void> {
+    await prisma.wedding.delete({
+      where: { id },
+    });
+  }
+}
+
+// Export singleton instance
+export const weddingRepository = new WeddingRepository();
+```
+
+## Zod Schema Organization
+
+Organize schemas by domain entity.
+
+```typescript
+// lib/schemas/wedding.ts
+import { z } from "zod";
+
+// Base schema for wedding
+export const weddingBaseSchema = z.object({
+  brideAndGroomNames: z
+    .string()
+    .min(1, "Names are required")
+    .max(100, "Names too long"),
+  date: z.coerce.date().refine((date) => date > new Date(), {
+    message: "Date must be in the future",
+  }),
+  location: z.string().min(1, "Location is required").max(200),
+  welcomeMessage: z.string().max(1000).optional(),
+  slug: z
+    .string()
+    .min(3, "Slug too short")
+    .max(50, "Slug too long")
+    .regex(/^[a-z0-9-]+$/, "Only lowercase letters, numbers, and hyphens"),
+});
+
+// For creating wedding
+export const createWeddingSchema = weddingBaseSchema;
+
+// For updating wedding (all fields optional)
+export const updateWeddingSchema = weddingBaseSchema.partial();
+
+// For public display (no validation, just types)
+export type Wedding = z.infer<typeof weddingBaseSchema> & {
+  id: string;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+// Export types
+export type WeddingInput = z.infer<typeof createWeddingSchema>;
+export type WeddingUpdate = z.infer<typeof updateWeddingSchema>;
+```
+
+## Error Handling Patterns
+
+### Service Layer Errors
+
+```typescript
+// Custom error classes
+export class NotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "NotFoundError";
+  }
+}
+
+export class UnauthorizedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "UnauthorizedError";
+  }
+}
+
+export class ValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ValidationError";
+  }
+}
+
+// In service
+async getWedding(id: string): Promise<Wedding> {
+  const wedding = await weddingRepository.findById(id);
+  if (!wedding) {
+    throw new NotFoundError("Wedding not found");
+  }
+  return wedding;
+}
+```
+
+### Server Action Error Handling
+
+```typescript
+"use server";
+
+export async function deleteWeddingAction(
+  id: string
+): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    await weddingService.delete(id, session.user.id);
+    revalidatePath("/dashboard/weddings");
+
+    return { success: true };
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      return { success: false, error: "Wedding not found" };
+    }
+    if (error instanceof UnauthorizedError) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    console.error("[deleteWeddingAction]", error);
+    return { success: false, error: "Failed to delete wedding" };
+  }
+}
+```
+
+### API Route Error Handling
+
+```typescript
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const wedding = await weddingService.getWedding(params.id);
+    return NextResponse.json(wedding);
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      return NextResponse.json(
+        { error: "Wedding not found" },
+        { status: 404 }
+      );
+    }
+
+    console.error("[GET /api/weddings/:id]", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+```
+
+## Type Safety Patterns
+
+### Prisma Type Imports
+
+```typescript
+import type { Wedding, Guest, Prisma } from "@prisma/client";
+
+// Use Prisma types for database operations
+type WeddingWithGuests = Prisma.WeddingGetPayload<{
+  include: { guests: true };
+}>;
+```
+
+### Zod Inferred Types
+
+```typescript
+import { z } from "zod";
+
+const schema = z.object({ name: z.string() });
+
+// Infer TypeScript type from Zod schema
+type FormData = z.infer<typeof schema>;
+```
+
+### Type Guards
+
+```typescript
+function isValidWedding(data: unknown): data is Wedding {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    "id" in data &&
+    "slug" in data
+  );
+}
+```
+
+## File Naming Conventions
+
+- **Components**: `kebab-case.tsx` (e.g., `wedding-form.tsx`)
+- **Services**: `kebab-case.ts` (e.g., `wedding-service.ts`)
+- **Schemas**: `kebab-case.ts` (e.g., `wedding.ts`)
+- **Types**: `kebab-case.ts` or `index.ts`
+- **Utils**: `kebab-case.ts` (e.g., `format-date.ts`)
+- **Pages**: `page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`
+- **API Routes**: `route.ts`
+
+## Import Order
+
+```typescript
+// 1. External dependencies
+import { useState } from "react";
+import { z } from "zod";
+
+// 2. Internal absolute imports
+import { Button } from "@/components/ui/button";
+import { weddingService } from "@/lib/services/wedding-service";
+
+// 3. Relative imports
+import { Header } from "./header";
+
+// 4. Type imports (separate)
+import type { Wedding } from "@/lib/types";
+```

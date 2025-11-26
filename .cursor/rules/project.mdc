@@ -1,0 +1,489 @@
+---
+alwaysApply: true
+description: "Business requirements and product specification. WHAT the platform does: couples create wedding pages, manage guests with RSVP, receive monetary contributions via Mercado Pago, private dashboard. Includes data models (User, Wedding, Guest, Contribution, PaymentConfig), feature specifications, user flows, business rules, UI/UX requirements, and performance targets."
+keywords: ["project", "requirements", "wedding platform", "MVP", "features", "Prisma schema", "User", "Wedding", "Guest", "RSVP", "Contribution", "payments", "dashboard", "business rules", "user flows"]
+relevantWhen: ["implementing features", "designing database schema", "creating API endpoints", "building UI components", "validating user input", "handling payments", "writing business logic", "making architectural decisions", "understanding requirements"]
+---
+
+# Project Specification - Wedding Platform (Página de Novios)
+
+## Project Overview
+
+**Name**: Página de Novios (Wedding Platform)
+
+**Purpose**: A platform where couples getting married can:
+
+- Create their own public wedding page
+- Display wedding date, location, and welcome message
+- Manage guest list with RSVP system
+- Receive monetary contributions (via Mercado Pago)
+- View contribution amounts and confirmed guests
+- Login and manage their event from a private dashboard
+
+**Target Users**:
+
+- Engaged couples planning their wedding
+- Wedding guests RSVPing and contributing
+- Platform administrators (optional for MVP)
+
+**Reference**: Similar to [milistadenovios.cl](https://milistadenovios.cl/)
+
+## MVP Scope
+
+Build a **functional MVP** with **clean architecture** that is:
+
+- Production-ready (not a prototype)
+- Well-structured for future scaling
+- Easy to extract to microservices later
+- Complete enough for real couples to use
+
+### In Scope (MVP)
+
+✅ User authentication (email/password)
+✅ Wedding creation and management
+✅ Guest list management (CRUD)
+✅ RSVP system (confirmed/rejected/pending)
+✅ Monetary contribution system (Mercado Pago)
+✅ Public wedding page (`/boda/[slug]`)
+✅ Private dashboard for couples
+✅ Payment webhook handling
+✅ Responsive design (mobile-first)
+
+### Out of Scope (Post-MVP)
+
+❌ Gift registry (physical items)
+❌ Photo gallery
+❌ Email notifications (can be simulated)
+❌ Social media sharing
+❌ Wedding website themes/templates
+❌ Multiple administrators per wedding
+
+## Data Models
+
+### Prisma Schema
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String    @id @default(cuid())
+  name      String
+  email     String    @unique
+  password  String    // hashed with bcrypt
+  weddings  Wedding[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([email])
+}
+
+model Wedding {
+  id                 String         @id @default(cuid())
+  userId             String
+  user               User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  brideAndGroomNames String         // e.g., "María & Juan"
+  date               DateTime       // Wedding date
+  location           String         // Wedding venue
+  welcomeMessage     String?        @db.Text // Optional message for guests
+  slug               String         @unique  // URL-friendly slug
+  guests             Guest[]
+  contributions      Contribution[]
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@index([slug])
+  @@index([userId])
+}
+
+model Guest {
+  id            String         @id @default(cuid())
+  weddingId     String
+  wedding       Wedding        @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  name          String
+  email         String?        // Optional for RSVP notifications
+  relation      String?        @db.Text // e.g., "Friend", "Family"
+  rsvpStatus    RsvpStatus     @default(PENDING)
+  contributions Contribution[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([weddingId])
+}
+
+enum RsvpStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
+model Contribution {
+  id             String            @id @default(cuid())
+  weddingId      String
+  wedding        Wedding           @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  guestId        String?           // Nullable for anonymous contributions
+  guest          Guest?            @relation(fields: [guestId], references: [id], onDelete: SetNull)
+  amount         Decimal           @db.Decimal(10, 2) // e.g., 50000.00 (Chilean Pesos)
+  status         PaymentStatus     @default(PENDING)
+  transactionRef String?           @unique // Mercado Pago transaction ID
+  paymentData    Json?             // Store payment metadata
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([weddingId])
+  @@index([status])
+  @@index([transactionRef])
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model PaymentConfig {
+  id           String   @id @default(cuid())
+  provider     String   @default("mercadopago")
+  accessToken  String   // Encrypted in production
+  publicKey    String
+  webhookUrl   String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+```
+
+### Model Descriptions
+
+**User**:
+
+- Represents couples (wedding organizers)
+- One user can create multiple weddings (for different events)
+- Authentication via email/password
+
+**Wedding**:
+
+- Core entity representing a wedding event
+- Has a unique `slug` for public URL (`/boda/[slug]`)
+- Contains event details: names, date, location, message
+- Belongs to one User
+
+**Guest**:
+
+- Person invited to the wedding
+- Can RSVP (confirm, reject, or pending)
+- Optional email for future notifications
+- Can make contributions
+
+**Contribution**:
+
+- Monetary contribution to the wedding
+- Links to Wedding (always) and Guest (optional for anonymous)
+- Tracks payment status and transaction reference
+- Stores Mercado Pago metadata
+
+**PaymentConfig**:
+
+- Stores payment provider configuration
+- For MVP, can be seeded with test credentials
+- In production, would be per-user or per-wedding
+
+## Features and Functionality
+
+### 1. Authentication System
+
+**Routes**:
+
+- `/[lang]/login` - Login page
+- `/[lang]/register` - Registration page
+- `/api/auth/*` - Auth.js endpoints
+
+**Requirements**:
+
+- Email + password authentication
+- Password hashing with bcrypt (min 8 characters)
+- Session-based auth (not JWT)
+- Protected routes with middleware
+- Redirect to dashboard after login
+
+**Validation**:
+
+```typescript
+const registerSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+```
+
+### 2. Dashboard (Private)
+
+**Routes**:
+
+- `/[lang]/dashboard` - Dashboard home
+- `/[lang]/dashboard/weddings` - List of user's weddings
+- `/[lang]/dashboard/weddings/new` - Create wedding
+- `/[lang]/dashboard/weddings/[id]` - Edit wedding
+- `/[lang]/dashboard/weddings/[id]/guests` - Manage guests
+- `/[lang]/dashboard/weddings/[id]/contributions` - View contributions
+
+**Features**:
+
+- View all weddings owned by user
+- Create new wedding with form validation
+- Edit wedding details
+- Delete wedding (with confirmation)
+- Add/edit/delete guests
+- View guest RSVP status
+- View contributions (amount, status, date)
+- See total contributions received
+- Copy public URL to share
+
+**Authorization**:
+
+- User can only access their own weddings
+- Middleware protects all `/dashboard/*` routes
+
+### 3. Public Wedding Page
+
+**Route**: `/[lang]/boda/[slug]`
+
+**Features**:
+
+- Display wedding information:
+  - Bride and groom names
+  - Wedding date (formatted per locale)
+  - Location
+  - Welcome message
+- RSVP form for guests
+- Contribution form with amount input
+- Beautiful, responsive design
+- Optimized for sharing (SEO meta tags)
+
+**RSVP Flow**:
+
+1. Guest enters name and email (optional)
+2. Selects "Confirm" or "Decline"
+3. Submits form
+4. Server validates and creates/updates Guest record
+5. Shows confirmation message
+
+**Contribution Flow**:
+
+1. Guest enters name (optional)
+2. Enters contribution amount
+3. Submits form
+4. Server creates Contribution record with status=PENDING
+5. Redirects to Mercado Pago payment page
+6. After payment, Mercado Pago webhook updates status
+7. Guest sees confirmation
+
+### 4. Payment Integration
+
+**Mercado Pago Integration**:
+
+- Create payment preference
+- Redirect user to Mercado Pago checkout
+- Handle webhook for payment status updates
+- Update Contribution status based on webhook
+
+**Routes**:
+
+- `/api/payments/create` - Create payment preference
+- `/api/payments/webhook` - Receive Mercado Pago webhooks
+
+**Payment States**:
+
+- `PENDING` - Payment initiated but not completed
+- `PAID` - Payment successful
+- `FAILED` - Payment failed or cancelled
+- `REFUNDED` - Payment refunded (future feature)
+
+**Abstraction Layer** (for future provider changes):
+
+```typescript
+interface PaymentProvider {
+  createPayment(data: PaymentData): Promise<PaymentResult>;
+  handleWebhook(request: Request): Promise<WebhookResult>;
+}
+
+class MercadoPagoProvider implements PaymentProvider {
+  // Implementation
+}
+
+// Easy to add new providers
+class StripeProvider implements PaymentProvider {
+  // Future implementation
+}
+```
+
+### 5. Guest Management
+
+**CRUD Operations**:
+
+- **Create**: Add guest manually from dashboard
+- **Read**: View all guests with RSVP status
+- **Update**: Edit guest information and status
+- **Delete**: Remove guest from list
+
+**Display**:
+
+- Table with columns: Name, Email, Relation, RSVP Status, Contributions
+- Filter by RSVP status
+- Search by name
+- Show count of confirmed/pending/rejected
+
+**Validation**:
+
+```typescript
+const guestSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email().optional().or(z.literal("")),
+  relation: z.string().optional(),
+  rsvpStatus: z.enum(["PENDING", "CONFIRMED", "REJECTED"]),
+});
+```
+
+## User Flows
+
+### Couple Creating Wedding
+
+1. Register/Login
+2. Navigate to dashboard
+3. Click "Create Wedding"
+4. Fill form (names, date, location, message, slug)
+5. Submit and create wedding
+6. Add guests manually (optional)
+7. Copy public URL to share with guests
+
+### Guest RSVPing
+
+1. Receive wedding URL from couple
+2. Visit `/boda/[slug]`
+3. See wedding information
+4. Fill RSVP form (name, confirm/decline)
+5. Submit
+6. See confirmation message
+
+### Guest Contributing
+
+1. Visit `/boda/[slug]`
+2. Scroll to contribution section
+3. Enter name (optional) and amount
+4. Click "Contribute"
+5. Redirect to Mercado Pago
+6. Complete payment
+7. Return to confirmation page
+
+### Couple Checking Status
+
+1. Login to dashboard
+2. Select wedding
+3. View guest list with RSVP statuses
+4. View contributions with amounts
+5. See total contributions received
+
+## Business Rules
+
+### Wedding Slug
+
+- Must be unique across all weddings
+- URL-friendly (lowercase, hyphens, no spaces)
+- Validated with regex: `^[a-z0-9-]+$`
+- Suggested format: `maria-y-juan-2025`
+
+### Guest RSVP
+
+- Guest can RSVP without creating an account
+- One RSVP per guest (can be updated)
+- Email is optional for RSVP
+- Couples can manually override RSVP status
+
+### Contributions
+
+- Minimum amount: configurable (e.g., $1,000 CLP)
+- No maximum amount
+- Can be anonymous (guestId is null)
+- Must have valid transactionRef after payment
+- Status updated via webhook, not manually
+
+### Authorization
+
+- Only wedding owner can:
+  - Edit wedding details
+  - Manage guest list
+  - View contributions
+- Public pages are accessible to anyone
+- No authentication required for RSVP/contributions
+
+### Data Validation
+
+- All inputs validated with Zod (client + server)
+- Dates must be in the future for new weddings
+- Email format validated
+- Amount must be positive number
+
+## UI/UX Requirements
+
+### Design Principles
+
+- **Mobile-first**: Optimize for mobile devices
+- **Simple & Clean**: Minimize clutter
+- **Wedding-themed**: Elegant, romantic design
+- **Accessible**: WCAG AA compliance
+- **Fast**: Optimize for performance
+
+### Color Scheme
+
+Use Tailwind + shadcn/ui theme system:
+
+- Primary: Wedding-themed (e.g., soft pink, gold, white)
+- Secondary: Complementary colors
+- Neutral: Grays for text and backgrounds
+- Success: Green for confirmed status
+- Warning: Yellow for pending
+- Error: Red for rejected/failed
+
+### Typography
+
+- Headings: Elegant serif or script font
+- Body: Clean sans-serif font (Inter, Roboto)
+- Readable sizes: min 16px for body text
+
+### Components
+
+- Use shadcn/ui components consistently
+- Custom components for wedding-specific features
+- Responsive tables for guest lists
+- Cards for displaying wedding information
+- Forms with proper validation feedback
+
+## Performance Requirements
+
+- **Page Load**: < 3 seconds on 3G
+- **Time to Interactive**: < 5 seconds
+- **Lighthouse Score**: > 90
+- **Database Queries**: Use proper indexes
+- **Images**: Optimized with Next.js Image component
+
+## Security Requirements
+
+- Passwords hashed with bcrypt (cost factor 10)
+- SQL injection prevention (Prisma handles this)
+- XSS prevention (React handles this)
+- CSRF protection (Auth.js handles this)
+- Environment variables for secrets
+- HTTPS in production
+- Rate limiting on API endpoints (future)
